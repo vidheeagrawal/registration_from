@@ -8,6 +8,12 @@ $page_title = "Dashboard";
 include('includes/header.php');
 include('includes/navbar.php');
 
+// ✅ Debugging: Check if session values exist
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['status'] = "Please login to access the dashboard.";
+    header("Location: login.php");
+    exit();
+}
 ?>
 
 <div class="py-5">
@@ -23,9 +29,9 @@ include('includes/navbar.php');
                         <hr>
 
                         <!-- ✅ Display user info properly -->
-                        <h5>Username: <?= isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'N/A'; ?></h5>
-                        <h5>Email: <?= isset($_SESSION['user_email']) ? $_SESSION['user_email'] : 'N/A'; ?></h5>
-                        <h5>Phone: <?= isset($_SESSION['user_phone']) ? $_SESSION['user_phone'] : 'N/A'; ?></h5>
+                        <h5>Username: <?= $_SESSION['user_name'] ?? 'N/A'; ?></h5>
+                        <h5>Email: <?= $_SESSION['user_email'] ?? 'N/A'; ?></h5>
+                        <h5>Phone: <?= $_SESSION['user_phone'] ?? 'N/A'; ?></h5>
 
                         <p>Welcome, <strong><?= $_SESSION['user_name'] ?? 'User'; ?></strong>!</p>
                     </div>

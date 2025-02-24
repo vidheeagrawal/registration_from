@@ -1,23 +1,11 @@
 <?php
-// Enable error reporting (for debugging purposes)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require 'config.php'; // ✅ Load Database Credentials
 
-// Database credentials
-$servername = "localhost";
-$username = "root";
-$password = "vidhee123";  // Ensure your password is secure and not exposed in production
-$dbname = "registration_db";
+// ✅ Establish Database Connection
+$con = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
 
-// Create a database connection
-$con = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
+// ✅ Check Connection
 if ($con->connect_error) {
-    die("Database connection failed: " . $con->connect_error);
+    die("❌ Database Connection Failed: " . $con->connect_error);
 }
-
-// Optional: Set character set to UTF-8 for proper encoding
-$con->set_charset("utf8");
-
 ?>

@@ -10,15 +10,19 @@ use PHPMailer\PHPMailer\Exception;
 
 // Load Composer's autoloader & Config
 require 'vendor/autoload.php';
-require 'config.php'; // Secure SMTP credentials
+require 'config.php'; // ✅ Secure SMTP credentials
 
-// ✅ Secure Email Sending Function
+// ✅ Function to Send Email Verification
 function sendEmailVerification($email, $name, $token)
 {
     global $SMTP_HOST, $SMTP_USER, $SMTP_PASS;
 
     $mail = new PHPMailer(true);
     try {
+        // ✅ Remove Debugging after testing
+        // $mail->SMTPDebug  = SMTP::DEBUG_SERVER; 
+        $mail->Debugoutput = 'html';
+
         // ✅ SMTP Configuration
         $mail->isSMTP();
         $mail->Host       = $SMTP_HOST;
@@ -33,19 +37,21 @@ function sendEmailVerification($email, $name, $token)
         $mail->addAddress($email, $name);
         $mail->isHTML(true);
         $mail->Subject = 'Verify Your Email';
-        $mail->Body    = "Hi $name,<br><br>
-                          Please verify your email by clicking the link below:<br>
-                          <a href='http://localhost/verify-email.php?token=$token'>Verify Email</a>";
 
-        $mail->send();
-        return true; // ✅ Email sent successfully
+        // ✅ Email Body with Verification Link
+        $verification_link = "http://localhost/registration-form/verify-email.php?token=" . $token;
+        $mail->Body = "Hi $name,<br><br>
+                       Please verify your email by clicking the link below:<br>
+                       <a href='$verification_link'>$verification_link</a>";
+
+        return $mail->send();
     } catch (Exception $e) {
-        error_log("Email Error: " . $mail->ErrorInfo); // ✅ Log error for debugging
-        return false; // ❌ Email failed
+        error_log("❌ Email Error: " . $mail->ErrorInfo);
+        return false;
     }
 }
 
-// ✅ Secure Registration Handling
+// ✅ Secure User Registration Handling
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_btn'])) {
     // ✅ Prevent CSRF Attacks
     if (!isset($_SESSION['csrf_token']) || $_SESSION['csrf_token'] !== $_POST['csrf_token']) {
@@ -55,14 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_btn'])) {
     }
 
     // ✅ Get & Sanitize Input
-    $name     = trim($_POST['name'] ?? '');
-    $phone    = trim($_POST['phone'] ?? '');
-    $email    = strtolower(trim($_POST['email'] ?? ''));
-    $password = $_POST['password'] ?? '';
-    $confirm  = $_POST['confirm_password'] ?? '';
+    $name     = trim(htmlspecialchars($_POST['name']));
+    $phone    = trim($_POST['phone']);
+    $email    = strtolower(trim($_POST['email']));
+    $password = $_POST['password'];
+    $confirm  = $_POST['confirm_password'];
 
     // ✅ Input Validation
-    if (!$name || !$email || !$password || !$confirm) {
+    if (empty($name) || empty($email) || empty($password) || empty($confirm)) {
         $_SESSION['status'] = "All fields are required.";
         header("Location: register.php");
         exit();

@@ -7,6 +7,11 @@ if (isset($_SESSION['user_id'])) {
     exit();
 }
 
+// ✅ Generate CSRF token (Only if not set)
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 $page_title = "Login Form";
 include('includes/header.php');
 include('includes/navbar.php');
@@ -30,7 +35,7 @@ include('includes/navbar.php');
 
                         <form action="logincode.php" method="POST">
                             <!-- ✅ CSRF Token for Security -->
-                            <input type="hidden" name="csrf_token" value="<?= bin2hex(random_bytes(32)); ?>">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
 
                             <div class="form-group mb-3">
                                 <label for="email">Email Address</label>
@@ -40,7 +45,9 @@ include('includes/navbar.php');
                                 <label for="password">Password</label>
                                 <div class="input-group">
                                     <input type="password" id="password" name="password" class="form-control" required autocomplete="off">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">👁️</button>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="form-group text-center">
@@ -59,14 +66,18 @@ include('includes/navbar.php');
 
 <script>
 // ✅ Show/Hide Password Toggle Function
-function togglePassword() {
+document.getElementById("togglePassword").addEventListener("click", function() {
     var passwordField = document.getElementById("password");
+    var icon = this.querySelector("i");
+
     if (passwordField.type === "password") {
         passwordField.type = "text";
+        icon.classList.replace("bi-eye", "bi-eye-slash");
     } else {
         passwordField.type = "password";
+        icon.classList.replace("bi-eye-slash", "bi-eye");
     }
-}
+});
 </script>
 
 <?php include('includes/footer.php'); ?>

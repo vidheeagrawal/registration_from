@@ -3,6 +3,11 @@ session_start();
 $page_title = "Registration Form";
 include('includes/header.php');
 include('includes/navbar.php');
+
+// ✅ Generate CSRF Token & Store in Session (ONLY if not already set)
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 
 <div class="py-5">
@@ -21,9 +26,9 @@ include('includes/navbar.php');
                             </div>
                         <?php endif; ?>
 
-                        <form action="code.php" method="POST" onsubmit="return validateForm()">
-                            <!-- ✅ CSRF Token for Security -->
-                            <input type="hidden" name="csrf_token" value="<?= bin2hex(random_bytes(32)); ?>">
+                        <form action="code.php" method="POST">
+                            <!-- ✅ CSRF Token for Security (Loaded from $_SESSION) -->
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']); ?>">
 
                             <div class="form-group mb-3">
                                 <label for="name">Full Name</label>
@@ -42,11 +47,11 @@ include('includes/navbar.php');
                                 <input type="password" id="password" name="password" class="form-control" required 
                                 pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}"
                                 title="Password must be at least 8 characters long, include a capital letter, a number, and a special character"
-                                oninput="checkPasswordMatch()">
+                                autocomplete="new-password" oninput="checkPasswordMatch()">
                             </div>
                             <div class="form-group mb-3">
                                 <label for="confirm_password">Confirm Password</label>
-                                <input type="password" id="confirm_password" name="confirm_password" class="form-control" required oninput="checkPasswordMatch()">
+                                <input type="password" id="confirm_password" name="confirm_password" class="form-control" required autocomplete="new-password" oninput="checkPasswordMatch()">
                                 <small id="passwordMatchMessage" class="text-danger"></small>
                             </div>
                             <div class="form-group text-center">
@@ -64,6 +69,7 @@ include('includes/navbar.php');
 </div>
 
 <script>
+// ✅ Real-time Password Match Check
 function checkPasswordMatch() {
     var password = document.getElementById("password").value;
     var confirm_password = document.getElementById("confirm_password").value;
@@ -74,17 +80,6 @@ function checkPasswordMatch() {
     } else {
         message.innerHTML = "";
     }
-}
-
-function validateForm() {
-    var password = document.getElementById("password").value;
-    var confirm_password = document.getElementById("confirm_password").value;
-
-    if (password !== confirm_password) {
-        alert("Passwords do not match!");
-        return false;
-    }
-    return true;
 }
 </script>
 

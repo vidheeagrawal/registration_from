@@ -1,12 +1,13 @@
 <?php 
+session_start();  
 
 $page_title = "Home Page";
 
 include('includes/header.php');
 include('includes/navbar.php');
+?>
 
- ?>
-
+<!-- ✅ Main Content -->
 <div class="py-5">
     <div class="container">
         <div class="row">

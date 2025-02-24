@@ -2,60 +2,56 @@
 session_start();
 include('dbcon.php');
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login_btn'])) { // ✅ Secure method check
-    if (!empty(trim($_POST['email'])) && !empty(trim($_POST['password'])) && !empty($_POST['csrf_token'])) {
-        $email = mysqli_real_escape_string($con, $_POST['email']);
-        $password = mysqli_real_escape_string($con, $_POST['password']);
+if (isset($_POST['login_btn'])) {
+    // ✅ Get & Sanitize Input
+    $email = trim(htmlspecialchars($_POST['email']));
+    $password = trim($_POST['password']);
 
-        //  CSRF Protection
-        if ($_SESSION['csrf_token'] !== $_POST['csrf_token']) {
-            $_SESSION['status'] = "Security check failed. Please try again.";
-            header("Location: login.php");
-            exit();
-        }
+    // ✅ Check if email & password are entered
+    if (empty($email) || empty($password)) {
+        $_SESSION['status'] = "All fields are required.";
+        header("Location: login.php");
+        exit();
+    }
 
-        //  Check if the user exists
-        $login_query = "SELECT id, name, email, password, verify_status FROM users WHERE email=? LIMIT 1";
-        $stmt = $con->prepare($login_query);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result(); 
+    // ✅ Prepare SQL Statement to prevent SQL injection
+    $stmt = $con->prepare("SELECT id, name, email, phone, password, verify_status FROM users WHERE email=? LIMIT 1");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
 
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc(); // 
+    // ✅ Check if user exists
+    if ($stmt->num_rows > 0) {
+        $stmt->bind_result($id, $name, $email, $phone, $hashed_password, $verify_status);
+        $stmt->fetch();
 
-            // ✅ Check if the email is verified
-            if ($user['verify_status'] == 1) {
-                // ✅ Verify password
-                if (password_verify($password, $user['password'])) {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_name'] = $user['name'];
-                    $_SESSION['status'] = "Login successful!";
-                    header("Location: dashboard.php");
-                    exit();
-                } else {
-                    $_SESSION['status'] = "Incorrect password. Please try again.";
-                    header("Location: login.php");
-                    exit();
-                }
+        // ✅ Check if email is verified
+        if ($verify_status == 1) { 
+            // ✅ Verify password
+            if (password_verify($password, $hashed_password)) { 
+                // ✅ Store user details in session
+                $_SESSION['user_id'] = $id;
+                $_SESSION['user_name'] = $name;
+                $_SESSION['user_email'] = $email;
+                $_SESSION['user_phone'] = $phone;
+
+                $_SESSION['status'] = "Login successful!";
+                header("Location: dashboard.php");
+                exit();
             } else {
-                $_SESSION['status'] = "Please verify your email before logging in.";
+                $_SESSION['status'] = "Incorrect password. Please try again.";
                 header("Location: login.php");
                 exit();
             }
         } else {
-            $_SESSION['status'] = "No account found with this email.";
+            $_SESSION['status'] = "Please verify your email before logging in.";
             header("Location: login.php");
             exit();
         }
     } else {
-        $_SESSION['status'] = "All fields are mandatory.";
+        $_SESSION['status'] = "No account found with this email.";
         header("Location: login.php");
         exit();
     }
-} else {
-    $_SESSION['status'] = "Invalid request.";
-    header("Location: login.php");
-    exit();
 }
 ?>
